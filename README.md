@@ -23,7 +23,7 @@ library(RepSeq)
 inputFolder <- list.files("/MiXCR_output/", full.name = TRUE, pattern = ".tsv")
 # Create an object of class RepSeqExperiment using the wrapper function readClonotypeSet
 datatab <- readClonotypeSet(inputFolder, cores=2L, aligner="MiXCR", chain="A", sampleinfo=NULL, keep.ambiguous=FALSE, keep.unproductive=FALSE, aa.th=8) 
-save(datatab, "~/datatab.rds")
+saveRDS(datatab, file="~/datatab.rds")
 ```
 
 ## Tab-delimited clonotype tables

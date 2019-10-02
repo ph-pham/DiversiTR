@@ -9,8 +9,8 @@ singleSampleTab <- tabItem(tabName = "singleSampleTab",
             value = "freqVpJtab"
           ),
           tabPanel("Domain distribution",
-            plotOutput("propV"),
-            plotOutput("propJ"),
+            plotOutput("propV", height = "auto"),
+            plotOutput("propJ", height = "auto"),
             busyIndicator(wait = 500),
             value = "PropVJtab"
           ),
@@ -34,6 +34,7 @@ singleSampleTab <- tabItem(tabName = "singleSampleTab",
             )
           ),
           tabPanel("VJ Distribution",
+            uiOutput("downVJheatmap"),
             plotOutput("plotCountHeatmap", height = "auto"),
             busyIndicator(wait = 500),
             value = "tabCountHeatmap"

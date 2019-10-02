@@ -88,7 +88,6 @@ shinyServer(function(input, output, session) {
         text = "comparative sample analysis",
         icon = icon("users", lib = "font-awesome")
       )
- 
     )
     # down load RDS freshly created 
     output$downloadRDS <- renderMenu({
@@ -165,13 +164,14 @@ shinyServer(function(input, output, session) {
     sampleError(input$singleSample)
     validate(need(!(is.null(input$singleScale) ||  input$singleScale == ""), "Choose a scale"))
     plotPropVJ(RepSeqDT(), "V", input$singleSample, input$singleScale)
-  })
+  }, height = 400)
   # plot proportion J
   output$propJ <- renderPlot({
     sampleError(input$singleSample)
     validate(need(!(is.null(input$singleScale) ||  input$singleScale == ""), "Choose a scale"))
     plotPropVJ(RepSeqDT(), "J", input$singleSample, input$singleScale)
-  })
+  }, height = 400)
+  
   # plot proportion VJ
   output$freqVpJ <- renderPlot({
     sampleError(input$singleSample)
@@ -186,7 +186,7 @@ shinyServer(function(input, output, session) {
     sampleError(input$singleSample)
     validate(need(!(is.null(input$singleScale) || input$singleScale == ""), "Choose a scale"))
     plotSpectratype(RepSeqDT(), input$singleSample, input$singleScale)
-  })  
+  })
   
   # plot individual spectratype 
   output$spectraPlotbis <- renderPlot({
@@ -194,24 +194,47 @@ shinyServer(function(input, output, session) {
     validate(need(!(is.null(input$singleScale) || input$singleScale == ""), "Choose a scale"))
     plotSpectratypebis(RepSeqDT(), input$singleSample, input$singleScale, input$spectraCDR3)
     }, width="auto", height <- function() {
-    if (is.null(input$singleSample) || input$singleSample == "") return(400)
+    if (is.null(input$singleSample) || input$singleSample == "") return(600)
     else { 
         nrowsGrid <- ceiling(length(assay(RepSeqDT())[lib == input$singleSample, unique(V)])/4)
         return(150 * nrowsGrid)
     }
   })
+
+  # render UI download button countheatmap
+  output$downVJheatmap <- renderUI({
+    if (!is.null(input$singleSample) & !(is.null(input$singleScale))) {
+        downloadButton("countVJheatmap", "Download SVG")
+    }
+  })
+  
   # plot count heatmap
   output$plotCountHeatmap <- renderPlot({
     sampleError(input$singleSample)
-    validate(need(!(is.null(input$singleScale) ||  input$singleScale == ""), "Choose a scale"))
-    plotCountVJ(RepSeqDT(), input$singleSample, input$singleScale)
+    validate(need(!(is.null(input$singleScale) || input$singleScale == ""), "Choose a scale"))
+    plotCountVJ(x=RepSeqDT(), sampleName=input$singleSample, scale=input$singleScale)
     }, height = function() {
-    if (is.null(input$singleSample) || input$singleSample == "") return(400)
+    if (is.null(input$singleSample) || input$singleSample == "") return(20)
     else {
-      nrowsGrid <- length(assay(RepSeqDT())[lib == input$singleSample, unique(J)])
-      return(20 * nrowsGrid + 100)
+      VlengthMax <- assay(RepSeqDT())[lib == input$singleSample, max(nchar(V))]
+      nrowsGrid <- max(sData(RepSeqDT())$J)     
+      return(30*nrowsGrid + 5*VlengthMax)
     }
   })
+  
+  output$countVJheatmap <- downloadHandler(
+    filename =  function() {
+      paste("heatmap_VJcount_", input$singleSample, ".svg", sep="")
+    },
+    # content is a function with argument file. content writes the plot to the device
+    content = function(file) {
+      svg(file, height=10, width=10)
+      print(plotCountVJ(x=RepSeqDT(), sampleName=input$singleSample, scale=input$singleScale)) # draw the plot
+      dev.off()  # turn the device off
+    },
+    contentType = "image/svg"
+  ) 
+  
   # render plot Renyi profile
   output$renyiGroup <- renderUI({
     validate(need(!(is.null(input$renyiLevel) || input$renyiLevel ==""), "select level"))
@@ -233,15 +256,18 @@ shinyServer(function(input, output, session) {
     validate(need(!(is.null(input$renyiLevel) || input$renyiLevel ==""), "select level"))
     validate(need(!(is.null(input$renyiGroup) || input$renyiGroup == ""), "select group"))    
     group <- switch((input$renyiGroup == "Sample") + 1, input$renyiGroup, NULL)
-    RepSeq::plotRenyiProfiles(RepSeqDT(), c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, Inf), input$renyiLevel, group)
+    #RepSeq::plotRenyiProfiles(RepSeqDT(), c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, Inf), input$renyiLevel, group)
+    plotRenyiProfiles(x=RepSeqDT(), alpha=c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, Inf), level=input$renyiLevel, colorBy=group)
   })  
+  
   # plot dissimilarity
   output$plotDissimilarityHM <- renderPlot({
     validate(need(!(is.null(input$dissimilarityLevel) || input$dissimilarityLevel == ""), "select level"))
     validate(need(!(is.null(input$dissimilarityIndex) || input$dissimilarityIndex == ""), "select level"))
     plotDissimilarityMatrix(x=RepSeqDT(), level=input$dissimilarityLevel, method=input$dissimilarityIndex, binary=input$dissimilarityBinary)
-    }, height = function() {session$clientData$output_plotDissimilarityHM_width}
-  )
+    }, height = function() {return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.5)}, 
+        width = function() {return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.5)})
+    
   # include md
   output$distFuncsMD <- renderUI({
       shiny::withMathJax(includeMarkdown("distanceFuncs.md"))
@@ -265,6 +291,7 @@ shinyServer(function(input, output, session) {
     group <- switch((input$freqSpectrumGroup == "Sample") + 1, input$freqSpectrumGroup, NULL)
     plotFrequencySpectrum(RepSeqDT(), groupBy = input$freqSpectrumStyle, colorBy = group)
   })
+  
   # render VJ distribution
   output$distribVpJGroup <- renderUI(
     selectGroup("distribVpJGroup", RepSeqDT())
@@ -272,7 +299,8 @@ shinyServer(function(input, output, session) {
   # plot VJ distribution
   output$plotDistribVpJ <- renderPlot({
     validate(need(!(is.null(input$distribVpJGroup) || input$distribVpJGroup == ""), "select group"))
-    group <- switch((input$distribVpJGroup == "Sample") + 1, input$distribVpJGroup, NULL)
+    #group <- switch((input$distribVpJGroup == "Sample") + 1, input$distribVpJGroup, NULL)
+    group <- input$distribVpJGroup
     plotDistribVpJ(RepSeqDT(), group)
   })
   # render Venn
@@ -285,23 +313,37 @@ shinyServer(function(input, output, session) {
     validate(need(!(is.null(input$vennGroup) || input$vennGroup == ""), "select group"))
     plotVenn(RepSeqDT(), level = input$vennLevel, colorBy = input$vennGroup)
   })
+  
   # render mu Score 
   output$plotmuScore <- renderPlot({
     validate(need(!(is.null(input$muLevel) || input$muLevel == ""), "select level"))
     validate(need(!(is.null(input$muType) || input$muType == ""), "select type"))
     print(session$clientData)
     plotmuScore(RepSeqDT(), input$muLevel, input$muType)
-    },height = function(){
-    
-    if(is.null(input$muLevel) || input$muLevel == "" || is.null(input$muType) || input$muType == "") return(400)
-    else {
-      level <- input$muLevel
-      groups <- sData(RepSeqDT())[,unlist(lapply(sData(RepSeqDT()), is.factor)), drop = F]
-      ngroups <- length(unique(unlist(groups[-1])))
-      nrowsGrid <- nrow(unique(assay(RepSeqDT())[,..level]))
-      return(110 + max(12*nrowsGrid, 20*ngroups + 15*ncol(groups[-1])))
-    }
-  })
+    }, height = function() {    
+            if(is.null(input$muLevel) || input$muLevel == "" || is.null(input$muType) || input$muType == "") return(20)
+            else {
+                level <- input$muLevel
+                sdata <- sData(RepSeqDT())
+                #groups <- sData(RepSeqDT())[,unlist(lapply(sData(RepSeqDT()), is.factor)), drop = F]
+                #ngroups <- length(unique(unlist(groups[-1])))
+                #nrowsGrid <- nrow(unique(assay(RepSeqDT())[,..level]))
+                #return(110 + max(12*nrowsGrid, 20*ngroups + 15*ncol(groups[-1])))
+                nrowsGrid <- max(sdata[, level])
+                slengthMax <- max(nchar(rownames(sdata)))
+                return(20 * nrowsGrid + 5 * slengthMax)
+                }
+        }, 
+       width = function() {
+            if(is.null(input$muLevel) || input$muLevel == "" || is.null(input$muType) || input$muType == "") return(20)
+            else {
+                level <- input$muLevel
+                levelLengthMax <- assay(RepSeqDT())[, max(nchar(as.character(get(level))))]
+                nsamples <- nrow(sData(RepSeqDT()))
+                return(40*nsamples + 5*levelLengthMax)
+                }
+       }
+  )
   # render 2by2 comparison
   output$count2v2Libs <- renderUI({
     selectizeInput("count2v2Libs",

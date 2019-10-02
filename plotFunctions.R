@@ -14,7 +14,7 @@ plotCountVJ <- function(x, sampleName=NULL, scale = c("counts", "percent", "cpm"
     if (missing(x)) stop("x is missing.")
     if (!is.RepSeqExperiment(x)) stop("an object of class RepSeqExperiment is expected.") 
     sNames <- rownames(sData(x))
-    if (is.null(sampleName)) {
+    if (is.null(sampleName) | sampleName=="") {
         index <- sNames[1]
         cat("Plot for the first sample in x:", index, ".\n")
     } else {
@@ -40,7 +40,7 @@ plotCountVJ <- function(x, sampleName=NULL, scale = c("counts", "percent", "cpm"
     graph.title <- paste0("sample: ", index)
     # print(data2plot)
     if (requireNamespace("pheatmap", quietly = TRUE)) {
-        p = pheatmap::pheatmap(data2plot, main=graph.title, cluster_rows = FALSE, cluster_cols = FALSE, cellheight = 20)#, cellwidth = 12, cellheight = 12)
+        p = pheatmap::pheatmap(data2plot, main=graph.title, cluster_rows = FALSE, cluster_cols = FALSE, cellheight = 20, silent = T)#, cellwidth = 12, cellheight = 12)
         }
     return(p)
 }
@@ -127,17 +127,22 @@ plotSpectratype <- function(x, sampleName=NULL, scale = c("counts", "percent", "
     }
     if(scl == "percent"){
       data2plot <- assay(x)[lib == index, ][, CDR3length:=nchar(CDR3aa)][,.(.N), by = .(V, CDR3length)][,percent := prop.table(N)]#geom_bar
-      p <- ggplot2::ggplot(data = data2plot, aes(x = CDR3length, y = percent, fill = V)) + scale_y_continuous(labels = scales::percent)
+      p <- ggplot2::ggplot(data = data2plot, aes(x = CDR3length, y = percent, fill = V)) + 
+                scale_y_continuous(labels = scales::percent)
+                
     }
     if(scl == "cpm"){
       data2plot <- assay(x)[lib == index, ][, CDR3length:=nchar(CDR3aa)][,.(.N), by = .(V, CDR3length)][,cpm := prop.table(N)*10^6]#geom_bar
       p <- ggplot(data = data2plot, aes(x = CDR3length, y = cpm, fill = V))
     }
     #ggplot
-    p +
-      geom_bar(stat = "identity", position="stack", colour = "black") +
+    p + geom_bar(stat = "identity", position="stack", colour = "black") +
       labs(title = paste(index,": V Distribution by aa length"), x = "CDR3 length (aa)", y = scl) +
-      theme(plot.title = element_text(face = "bold", hjust = 0.5))
+      theme(plot.title = element_text(face = "bold", hjust = 0.5, size=14),
+            axis.text=element_text(size=14),
+            text = element_text(size=14), 
+            axis.text.x = element_text(size=14),
+            axis.text.y = element_text(size=14))
 }
 
 #' plot Renyi's profiles
@@ -172,9 +177,13 @@ plotRenyiProfiles <- function(x, alpha=c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, I
       data2plot <- melt(data = tmp, id.vars = "variable", measure.vars = sNames, variable.name = "lib")
       data2plot[, alpha := as.numeric(as.character(variable))]
       ggplot(data = data2plot, aes(x = alpha, y = as.numeric(value), color = lib, group = lib)) +
-        geom_line() +
+        geom_line(size = 1.5) +
         labs(title = paste("Level ",levelChoice, ": Renyi's Entropy"), y = "Renyi's Entropy") +
-        theme(plot.title = element_text(face = "bold", hjust = 0.5))
+        theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 14),
+              text = element_text(size=14),
+              axis.text=element_text(size=14),
+              axis.text.x = element_text(size=14),
+              axis.text.y = element_text(size=14))
         } else {
             if (is.na(match(eval(colorBy), colnames(sData(x))))) stop(paste0(colorBy," not found in sData(x)."))
             #ggplot
@@ -183,10 +192,13 @@ plotRenyiProfiles <- function(x, alpha=c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, I
             data2plot[,paste(colorBy) := lapply(.SD, function(x){sdata[x, colorBy]}), .SDcols = "lib"]
             data2plot[, alpha := as.numeric(as.character(variable))]
             ggplot(data = data2plot, aes_string(x = "alpha", y = "value", colour = paste(colorBy))) +
-              geom_line(aes(group = lib)) +
+              geom_line(aes(group = lib), size = 1.5) +
               labs(title = paste("Level ",levelChoice, ": Renyi's Entropy"), y = "Renyi's Entropy") +
-              theme(plot.title = element_text(face = "bold", hjust = 0.5))
-
+              theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 14),
+                    text = element_text(size=14), 
+                    axis.text=element_text(size=14),
+                    axis.text.x = element_text(size=14),
+                    axis.text.y = element_text(size=14))
         }
 }
 
@@ -210,8 +222,6 @@ plotRenyiProfiles <- function(x, alpha=c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, I
 #   pp <- melt(p, id = levelChoice, colnames(p)[2:4])
 #   ggplot(data = pp, aes_string(x = levelChoice, y = "value", fill = "variable")) + geom_bar(stat = "identity", position="stack")
 # }
-
-
 plotPropVJ <- function(x , level = c("V", "J"), sample = NULL, scale = c("counts", "percent", "cpm")){
   if (missing(x)) stop("x is missing.")
   if (!is.RepSeqExperiment(x)) stop("an object of class RepSeqExperiment is expected.")
@@ -227,29 +237,29 @@ plotPropVJ <- function(x , level = c("V", "J"), sample = NULL, scale = c("counts
   data2plot <- data.table::copy(assay(x))[lib == sName, lapply(.SD, sum), by = levelChoice, .SDcols = "count"]
   if(scale == "percent"){
     data2plot[,percent := prop.table(count)]
-    p <-   ggplot(data = data2plot, aes_string(x = levelChoice, y = "percent", fill = levelChoice)) +
-      scale_y_continuous(labels = scales::percent)
+    p <- ggplot(data = data2plot, aes_string(x = levelChoice, y = "percent", fill = levelChoice)) +
+        scale_y_continuous(labels = scales::percent)
   }
   if(scale == "cpm"){
     data2plot[,cpm := prop.table(count)*10^6]
-    p <-   ggplot(data = data2plot, aes_string(x = levelChoice, y = "cpm", fill = levelChoice)) 
+    p <- ggplot(data = data2plot, aes_string(x = levelChoice, y = "cpm", fill = levelChoice)) 
   }
-  if(scale == "counts"){
-    
+  if(scale == "counts"){   
     p <- ggplot(data = data2plot, aes_string(x = levelChoice, y = "count", fill = levelChoice)) 
   }
   p  +
     geom_bar(width = 0.7, stat = "identity", show.legend=F) +
     scale_x_discrete(limits = data2plot[order(-count)][[levelChoice]]) +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 12))+
     labs(title = paste(sample, ": ", levelChoice, " Distribution")) +
-    theme(plot.title = element_text(face = "bold", hjust = 0.5))
+    theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 14),
+        axis.text=element_text(size=14),
+        axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+        axis.text.y = element_text(size = 14))
 }
 
 plotFreqVpJ <- function(x, sample){
   if (missing(x)) stop("x is missing.")
   if (!is.RepSeqExperiment(x)) stop("an object of class RepSeqExperiment is expected.")
-
   if (is.null(sample)) {
     sName <- rownames(sData(x))[1]
     cat("Plot for the first sample in x:", sName, ".\n")
@@ -264,20 +274,22 @@ plotFreqVpJ <- function(x, sample){
     else if(x<=10000) "]1000, 10000]"
     else "]10000, 100000]"
     }
-   data2plot <- data2plot[lib == sName, lapply(.SD, sum), by = VpJ, .SDcols = "count"][,interval := unlist(lapply(count, f))]
+  data2plot <- data2plot[lib == sName, lapply(.SD, sum), by = VpJ, .SDcols = "count"][,interval := unlist(lapply(count, f))]
    breaks <- unique(data2plot[,interval])
    plotBreaks <- breaks[order(nchar(breaks), breaks)]
    data2plot <- data2plot[,lapply(.SD, sum), by = interval, .SDcols = "count"][,percent := prop.table(count)]
-  #data2plot[,interval] <-  factor(data2plot[,interval], levels = c("1", "]1, 10]", "]10, 100]", "]100, 1000]", ">1000"))
-  #ggplot(data2plot, aes(x = count)) + geom_histogram(breaks = c(1, 10, 100, 1000, max(data2plot[,count]))) + scale_x_log10(breaks = c(1, 10, 100, 1000, max(data2plot[,count]))) + scale_y_log10() + labs(title = "TR sequence distribution", y = "# of occurences") + theme(plot.title = element_text(face = "bold", hjust = 0.5))
-  ggplot(data = data2plot, aes(x = interval, y = percent, fill = interval)) +
+
+  ggplot2::ggplot(data = data2plot, aes(x = interval, y = percent, fill = interval)) +
     geom_bar(stat = "identity", show.legend=F) +
     scale_x_discrete(limits=plotBreaks) +
     scale_y_continuous(labels = scales::percent) +
-    geom_text(aes(y=percent, label= paste(100*round(percent, 3), "%")), vjust=-1) +
-    #coord_polar("y", start = 0) +
+    ylim(0, 1) +
+    geom_text(aes(y=percent, label = paste(100*round(percent, 2), "%")), vjust=-1, size=7) +
     labs(title = "TR sequence distribution", x = "count", y = "# of occurences") +
-    theme(plot.title = element_text(face = "bold", hjust = 0.5))
+    theme(plot.title = element_text(face = "bold", hjust = 0.5), 
+            text = element_text(size=18), 
+            axis.text.x = element_text(size=16),
+            axis.text.y = element_text(size=16))
 }
 
 plotSpectratypebis <- function(x, sampleName=NULL, scale = c("counts", "percent", "cpm"), showCDR3 = F) {
@@ -315,8 +327,12 @@ plotSpectratypebis <- function(x, sampleName=NULL, scale = c("counts", "percent"
   }
   p <- p + ggplot2::geom_bar(stat = "identity") + scale_x_continuous(breaks = data2plot[, unique(CDR3length)]) +
         ggplot2::labs(title = paste(index,": V Distribution by aa length"), x = "CDR3 length (aa)", y = scl) +
-        ggplot2::theme(plot.title = element_text(face = "bold", hjust = 0.5)) +
-        ggplot2::facet_wrap(~ factor(V, naturalsort::naturalsort(unique(V))), ncol = 4, scales = "free")
+        ggplot2::facet_wrap(~ factor(V, naturalsort::naturalsort(unique(V))), ncol = 4, scales = "free") + 
+        ggplot2::theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 14), 
+            text = element_text(size=14), 
+            axis.text=element_text(size=14),
+            axis.text.x = element_text(size=14),
+            axis.text.y = element_text(size=14))
   print(p)
 }
 
@@ -373,8 +389,9 @@ plotDissimilarityMatrix <- function(x, level=c("VpJ", "V", "J", "VJ", "CDR3aa"),
     graph.title <- paste0("dissimilarity heatmap : ", levelChoice)
     if (requireNamespace("pheatmap", method = methodChoice, quietly = TRUE)) {
       p <- pheatmap::pheatmap(simmat, main=graph.title, cluster_rows = TRUE, cluster_cols = TRUE, 
-        treeheight_row = 0L, cellheight = 7, cellwidth = 7,
-        annotation_col=groups[-1], annotation_row = groups[-1], show_rownames=FALSE, clustering_method = "ward.D")
+        treeheight_row = 0L, #cellheight = 7, cellwidth = 7,
+        annotation_col=groups[-1], 
+        show_rownames=FALSE, clustering_method = "ward.D", silent = TRUE)
       }
   return(p)
 }
@@ -466,7 +483,7 @@ plotRarefaction<- function(x, colorBy = NULL, groupBy = FALSE){#, step){
     rarem[,paste(colorBy) := lapply(.SD, function(x){sdata[x, colorBy]}), .SDcols = "variable"]
     return(ggplot(data = rarem[value!=0], aes_string(x = "size", y = "value", colour = colorBy)) + geom_line())
   }
-  ggplot(data = rarem[value!=0], aes(x = size, y = value, colour = variable)) + geom_line()
+  ggplot(data = rarem[value!=0], aes(x = size, y = value, colour = variable)) + geom_line(size = 2)
   # tcounts = t(as.matrix(dcounts[,!"VpJ"]))
   # #print(head(tcounts))
   # raremax <- min(rowSums(tcounts))
@@ -479,7 +496,6 @@ plotDistribVpJ <- function(x, colorBy = NULL){
   if (missing(x)) stop("x is missing.")
   if (!is.RepSeqExperiment(x)) stop("an object of class RepSeqExperiment is expected.")
   if(is.null(colorBy)) stop("need group for now")
-  
   sdata <- sData(x)
   counts <- assay(x)
   counts[,group := lapply(.SD, function(x){sdata[x, colorBy]}), .SDcols = "lib"]
@@ -492,7 +508,15 @@ plotDistribVpJ <- function(x, colorBy = NULL){
   #countsb <- frankv(counts, cols = "count", ties.method = "average")
   counts[,rank := lapply(.SD, frankv, ties.method = "min", order = -1L), by = group, .SDcols = "count"]
   counts <- unique(counts[,!"VpJ"])
-  ggplot(data = counts, aes(x = rank, y = count, colour = group)) + geom_point() + scale_x_log10() + scale_y_log10()
+  ggplot(data = counts, aes(x = rank, y = count, colour = group)) + 
+            geom_point() + 
+            scale_x_log10() + scale_y_log10() + 
+            theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 14), 
+                text = element_text(size=14), 
+                axis.text=element_text(size=14),
+                axis.text.x = element_text(size=14),
+                axis.text.y = element_text(size=14))
+            
 }
 
 plotVenn <- function(x, level = c("V", "J", "VJ", "VpJ", "CDR3aa"), colorBy = NULL){
@@ -510,14 +534,14 @@ plotVenn <- function(x, level = c("V", "J", "VJ", "VpJ", "CDR3aa"), colorBy = NU
   
 }
 
-plotmuScore <- function(x, level=c("V", "J", "VJ", "VpJ", "CDR3aa"), type=c("count", "usage")) {
+plotmuScore <- function(x, level=c("V", "J", "VJ"), type=c("count", "usage")) {
   levelChoice = match.arg(level)
   typeChoice = match.arg(type)
   sdata <- sData(x)
   groups <- sdata[,unlist(lapply(sdata, is.factor)), drop = F]
   temp <- muScore(x, levelChoice, typeChoice)
   data2plot <- data.frame(temp, row.names=1)
-  pheatmap::pheatmap(data2plot[, -ncol(data2plot)], cluster_rows=FALSE, cluster_cols = TRUE, annotation_col=groups[-1], show_rownames=TRUE, cellheight = 12,
+  pheatmap::pheatmap(data2plot[, -ncol(data2plot)], cluster_rows=FALSE, cluster_cols = TRUE, annotation_col=groups[-1], show_rownames=TRUE,
                      color = colorRampPalette(c("lightgrey", "red"))(100))
 }
 

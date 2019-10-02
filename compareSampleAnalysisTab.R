@@ -51,7 +51,7 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                         selected="FALSE") #options = list(onInitialize = I('function() { this.setValue(""); }')
                                   )
                                   ),
-                                  plotOutput("plotDissimilarityHM", height = "auto"),
+                                  plotOutput("plotDissimilarityHM", height = "auto", width="auto"),
                                   busyIndicator(wait = 500),
                                   withMathJax(),
                                   htmlOutput("distFuncsMD"),
@@ -102,7 +102,7 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                                   selectizeInput(
                                                     "muLevel",
                                                     "Select level",
-                                                    choices = list("V", "J", "VJ", "VpJ", "CDR3aa"),
+                                                    choices = list("V", "J", "VJ"),
                                                     options = list(onInitialize = I('function() { this.setValue(""); }'))
                                                   )),
                                            column(width = 3,

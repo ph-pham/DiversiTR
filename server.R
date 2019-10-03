@@ -296,12 +296,13 @@ shinyServer(function(input, output, session) {
   output$distribVpJGroup <- renderUI(
     selectGroup("distribVpJGroup", RepSeqDT())
   )
+  
   # plot VJ distribution
   output$plotDistribVpJ <- renderPlot({
     validate(need(!(is.null(input$distribVpJGroup) || input$distribVpJGroup == ""), "select group"))
     #group <- switch((input$distribVpJGroup == "Sample") + 1, input$distribVpJGroup, NULL)
     group <- input$distribVpJGroup
-    plotDistribVpJ(RepSeqDT(), group)
+    plotDistribVpJ(RepSeqDT(), group, input$distribVpJGroupMeth)
   })
   # render Venn
   output$vennGroup <- renderUI(

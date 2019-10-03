@@ -62,26 +62,38 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                   fluidRow(
                                     column(width = 3,
                                            uiOutput("freqSpectrumGroup")
-                                           ),
+                                    ),
                                     column(width = 3,
-                                           conditionalPanel(
-                                             condition = "input.freqSpectrumGroup != null & input.freqSpectrumGroup.length>0 & input.freqSpectrumGroup != 'Sample'",
-                                           radioButtons(
+                                        conditionalPanel(
+                                            condition = "input.freqSpectrumGroup != null & input.freqSpectrumGroup.length>0 & input.freqSpectrumGroup != 'Sample'",
+                                            radioButtons(
                                              "freqSpectrumStyle",
-                                             "style du graphe",
-                                             choiceNames = c("une courbe par groupe", "une courbe par echantillon"),
+                                             "Graph format",
+                                             choiceNames = c("Curv by group", "Curv by sample"),
                                              choiceValues = c(T, F),
-                                             selected = character(0)))
-                                           )),
+                                             selected = character(0)
+                                            )
+                                        )
+                                    )
+                                  ),
                                   plotOutput("plotfreqSpectrum"),
                                   busyIndicator(wait = 500),
                                   value = "freqSpectrum"
                                 ),
                                 tabPanel("Distribution clonotype (decreasing rank)",
-                                         uiOutput("distribVpJGroup"),
-                                         plotOutput("plotDistribVpJ"),
-                                         busyIndicator(wait = 500)
+                                    fluidRow(
+                                        column(width = 3, 
+                                         uiOutput("distribVpJGroup")
                                          ),
+                                        column(width = 3, 
+                                            selectInput("distribVpJGroupMeth", "Select method",
+                                                choices = c("Sum" = "sum", "Average" = "mean"),
+                                                selected = "Sum")
+                                        )    
+                                    ),
+                                    plotOutput("plotDistribVpJ"),
+                                    busyIndicator(wait = 500)
+                                ),
                                 tabPanel("Venn Diagram",
                                          fluidRow(
                                            column(width = 3,

@@ -388,9 +388,9 @@ plotDissimilarityMatrix <- function(x, level=c("VpJ", "V", "J", "VJ", "CDR3aa"),
     simmat <- data[, vegan::vegdist(t(.SD), method=methodChoice, diag=TRUE, upper=TRUE, binary=as.logical(binary)), .SDcols=sNames]
     graph.title <- paste0("dissimilarity heatmap : ", levelChoice)
     if (requireNamespace("pheatmap", method = methodChoice, quietly = TRUE)) {
-      p <- pheatmap::pheatmap(simmat, main=graph.title, cluster_rows = TRUE, cluster_cols = TRUE, 
-        treeheight_row = 0L, #cellheight = 7, cellwidth = 7,
-        annotation_col=groups[-1], 
+      p <- pheatmap::pheatmap(simmat, main=graph.title, cluster_rows = TRUE, cluster_cols = TRUE,
+        treeheight_row = 0L, clustering_distance_rows = simmat, clustering_distance_cols = simmat, 
+        annotation_col=groups[-1], show_colnames=T, labels_col = sNames,
         show_rownames=FALSE, clustering_method = "ward.D", silent = TRUE)
       }
   return(p)
@@ -492,7 +492,7 @@ plotRarefaction<- function(x, colorBy = NULL, groupBy = FALSE){#, step){
 }
 
 
-plotDistribVpJ <- function(x, colorBy = NULL){
+plotDistribVpJ <- function(x, colorBy = NULL, aggreg=c("sum", "mean")){
   if (missing(x)) stop("x is missing.")
   if (!is.RepSeqExperiment(x)) stop("an object of class RepSeqExperiment is expected.")
   if(is.null(colorBy)) stop("need group for now")
@@ -500,23 +500,23 @@ plotDistribVpJ <- function(x, colorBy = NULL){
   counts <- assay(x)
   counts[,group := lapply(.SD, function(x){sdata[x, colorBy]}), .SDcols = "lib"]
   print(counts)
-  counts <- counts[, lapply(.SD, sum), by = .(group, VpJ), .SDcols = "count"]
+  aggr <- match.arg(aggreg)
+  if (aggr == "sum") counts <- counts[, lapply(.SD, sum), by = .(group, VpJ), .SDcols = "count"]
+  if (aggr == "mean") counts <- counts[, lapply(.SD, mean), by = .(group, VpJ), .SDcols = "count"]
   # counts[,order(-count), by = .(group, VpJ)]
   # #ggplot(data = counts, aes_string(x = ))
   # print(counts)
-
   #countsb <- frankv(counts, cols = "count", ties.method = "average")
   counts[,rank := lapply(.SD, frankv, ties.method = "min", order = -1L), by = group, .SDcols = "count"]
   counts <- unique(counts[,!"VpJ"])
   ggplot(data = counts, aes(x = rank, y = count, colour = group)) + 
-            geom_point() + 
-            scale_x_log10() + scale_y_log10() + 
+            geom_point() + scale_x_log10() + scale_y_log10() + 
+            ylab(paste(aggr, "counts")) +
             theme(plot.title = element_text(face = "bold", hjust = 0.5, size = 14), 
                 text = element_text(size=14), 
                 axis.text=element_text(size=14),
                 axis.text.x = element_text(size=14),
                 axis.text.y = element_text(size=14))
-            
 }
 
 plotVenn <- function(x, level = c("V", "J", "VJ", "VpJ", "CDR3aa"), colorBy = NULL){

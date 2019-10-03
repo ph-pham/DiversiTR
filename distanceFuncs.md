@@ -10,6 +10,8 @@ output:
 
 *Uses vegdist from package vegan*
 
+*Clustering tree performed using the Ward's method*
+
 ## Distance functions
 
 $x_{ij}$ refers to the count of the species $i$ in the sample $j$

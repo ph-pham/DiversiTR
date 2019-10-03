@@ -17,10 +17,10 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                     ),
                                     column(width = 3,
                                            uiOutput("renyiGroup")
-                                    ),
-                                    column(width = 6,
-                                           uiOutput("renyiGroupChoice")
-                                    )
+                                    )#,
+                                    #column(width = 6,
+                                    #       uiOutput("renyiGroupChoice")
+                                    #)
                                   ),  
                                   plotOutput("plotRenyi"),
                                   busyIndicator(wait = 500),

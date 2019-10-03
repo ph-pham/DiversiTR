@@ -164,13 +164,13 @@ shinyServer(function(input, output, session) {
     sampleError(input$singleSample)
     validate(need(!(is.null(input$singleScale) ||  input$singleScale == ""), "Choose a scale"))
     plotPropVJ(RepSeqDT(), "V", input$singleSample, input$singleScale)
-  }, height = 400)
+  }, height = 500)
   # plot proportion J
   output$propJ <- renderPlot({
     sampleError(input$singleSample)
     validate(need(!(is.null(input$singleScale) ||  input$singleScale == ""), "Choose a scale"))
     plotPropVJ(RepSeqDT(), "J", input$singleSample, input$singleScale)
-  }, height = 400)
+  }, height = 500)
   
   # plot proportion VJ
   output$freqVpJ <- renderPlot({

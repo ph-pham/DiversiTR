@@ -80,7 +80,7 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                   busyIndicator(wait = 500),
                                   value = "freqSpectrum"
                                 ),
-                                tabPanel("Distribution clonotype (decreasing rank)",
+                                tabPanel("Distribution clonotype",
                                     fluidRow(
                                         column(width = 3, 
                                          uiOutput("distribVpJGroup")
@@ -95,17 +95,23 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                     busyIndicator(wait = 500)
                                 ),
                                 tabPanel("Venn Diagram",
-                                         fluidRow(
-                                           column(width = 3,
-                                         uiOutput("vennGroup")),
-                                         column(width = 3,
-                                         selectizeInput(
-                                           "vennLevel",
-                                           "Select level",
-                                           choices = list("V", "J", "VJ", "VpJ", "CDR3aa"),
-                                           options = list(onInitialize = I('function() { this.setValue(""); }'))
-                                         ))),
-                                         plotOutput("plotVenn", height = 600),
+                                    fluidRow(
+                                        column(width = 3,
+                                            uiOutput("vennGroup")
+                                        ),
+                                        column(width = 3,
+                                            selectizeInput(
+                                                "vennLevel",
+                                                "Select level",
+                                                choices = list("V", "J", "VJ", "VpJ", "CDR3aa"),
+                                                options = list(onInitialize = I('function() { this.setValue(""); }'))
+                                            )
+                                        ),
+                                        column(width = 3,
+                                            uiOutput("VennSamplesUI")
+                                        )
+                                    ),
+                                         plotOutput("plotVenn", height = 800, width = 800),
                                          busyIndicator(wait = 500)
                                 ),
                                 tabPanel("Multivariate scores",
@@ -132,7 +138,7 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                          busyIndicator(wait = 500)
                                   
                                 ),
-                                tabPanel("side by side count comparison",
+                                tabPanel("Two samples comparison",
                                          fluidRow(
                                            column(width = 3,
                                                   selectizeInput(

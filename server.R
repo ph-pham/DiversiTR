@@ -265,9 +265,18 @@ shinyServer(function(input, output, session) {
     validate(need(!(is.null(input$dissimilarityLevel) || input$dissimilarityLevel == ""), "select level"))
     validate(need(!(is.null(input$dissimilarityIndex) || input$dissimilarityIndex == ""), "select level"))
     plotDissimilarityMatrix(x=RepSeqDT(), level=input$dissimilarityLevel, method=input$dissimilarityIndex, binary=input$dissimilarityBinary)
-    }, height = function() {return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.5)}, 
-        width = function() {return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.5)})
     
+    }, height = function() {
+        nsamples <- nrow(sData(RepSeqDT()))
+        fact <- ifelse(nsamples < 50, 0.6, 1) 
+        return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*fact)
+        #return(nsamples * 30 + 40)
+        }, #{return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.65)}, 
+       width = function() {
+        nsamples <- nrow(sData(RepSeqDT()))
+        fact <- ifelse(nsamples < 50, 0.6, 1) 
+        return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*fact)} #{return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.65)})
+    )
   # include md
   output$distFuncsMD <- renderUI({
       shiny::withMathJax(includeMarkdown("distanceFuncs.md"))
@@ -306,13 +315,32 @@ shinyServer(function(input, output, session) {
   })
   # render Venn
   output$vennGroup <- renderUI(
-    selectGroup("vennGroup", RepSeqDT())
+    selectGroup("vennGroupSelected", RepSeqDT())
   )
+  
+  # render Venn samples
+  output$VennSamplesUI <- renderUI({
+    validate(need(!(is.null(input$vennLevel) || input$vennLevel ==""), message=" ", label=" "))
+    validate(need(input$vennGroupSelected == "Sample", message=" ", label=" "))
+    choices <- rownames(sData(RepSeqDT()))
+    selectizeInput("vennSamples",
+                   "Select samples (3 max)",
+                   choices = choices,
+                   options = list(maxItems = 3, onInitialize = I('function() { this.setValue(""); }')),
+                   multiple = T
+    )
+  })
+  
   # plot Venn
   output$plotVenn <- renderPlot({
     validate(need(!(is.null(input$vennLevel) || input$vennLevel == ""), "select level"))
-    validate(need(!(is.null(input$vennGroup) || input$vennGroup == ""), "select group"))
-    plotVenn(RepSeqDT(), level = input$vennLevel, colorBy = input$vennGroup)
+    validate(need(!(is.null(input$vennGroupSelected) || input$vennGroupSelected == ""), "select group"))
+    if( input$vennGroupSelected == "Sample") {
+        validate(need(!(is.null(input$vennSamples) || input$vennSamples == ""), "select samples"))
+        validate(need(length(input$vennSamples)>1, "select a second sample"))
+        grp <- input$vennSamples 
+        } else grp <- input$vennGroupSelected
+    plotVenn(RepSeqDT(), level = input$vennLevel, colorBy = grp)
   })
   
   # render mu Score 

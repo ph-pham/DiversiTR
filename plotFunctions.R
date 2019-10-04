@@ -522,16 +522,20 @@ plotDistribVpJ <- function(x, colorBy = NULL, aggreg=c("sum", "mean")){
 plotVenn <- function(x, level = c("V", "J", "VJ", "VpJ", "CDR3aa"), colorBy = NULL){
   if (missing(x)) stop("x is missing.")
   if (!is.RepSeqExperiment(x)) stop("an object of class RepSeqExperiment is expected.")
-  if(length(unique(sData(x)[,colorBy]))>5) stop("Too many groups or samples")
-  levelChoice = match.arg(level)
+  #if(length(unique(sData(x)[,colorBy]))>5) stop("Too many groups or samples")
+  levelChoice <- match.arg(level)
   sdata <- sData(x)
-  sNames <- unique(sdata[, colorBy])
   counts <- assay(x)
-  counts[,group := lapply(.SD, function(x){sdata[x, colorBy]}), .SDcols = "lib"]
-  dcounts <- dcast(data = counts, paste(levelChoice,"~group"), value.var = "count", fun.aggregate = sum)
-  a <- limma::vennCounts(dcounts[,..sNames])
+  if (length(colorBy) > 1) {
+    sNames <- colorBy
+    dcounts <- dcast(data = counts, paste(levelChoice,"~lib"), value.var = "count", fun.aggregate = sum)
+    } else {
+        sNames <- unique(sdata[, colorBy])
+        counts[,group := lapply(.SD, function(x){sdata[x, colorBy]}), .SDcols = "lib"]
+        dcounts <- dcast(data = counts, paste(levelChoice,"~group"), value.var = "count", fun.aggregate = sum)
+        }       
+  a <- limma::vennCounts(dcounts[ , ..sNames])
   limma::vennDiagram(a, circle.col = c("red", "blue", "green3", "purple", "yellow"))
-  
 }
 
 plotmuScore <- function(x, level=c("V", "J", "VJ"), type=c("count", "usage")) {

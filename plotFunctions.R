@@ -396,6 +396,39 @@ plotDissimilarityMatrix <- function(x, level=c("VpJ", "V", "J", "VJ", "CDR3aa"),
   return(p)
 }
 
+#' function plot Multidimensional scaling result
+#'
+#' function computes pairwise distances between all libs for a chosen level. Thus, multidimentional scaling (2 dimensions) is applied to the resulting matrix, ggplot was used to represente individuals on the scaling dimensions.
+#' @param x an object of class RepSeqExperiment
+#' @param level repertoire level
+#' @param method distance computation method
+#' @return a graph
+plotMDS <- function(x, level=c("VpJ", "V", "J", "VJ", "CDR3aa"), method = c("manhattan", "euclidean", "canberra", "clark", "bray", "kulczynski", "jaccard", "gower", "altGower", "morisita", "horn", "mountford", "raup", "binomial", "chao", "cao", "mahalanobis"), colGrp=NULL) {
+if (missing(x)) stop("x is missing.")
+    if (!is.RepSeqExperiment(x)) stop("an object of class RepSeqExperiment is expected.")
+    variable <- NULL
+    levelChoice <- match.arg(level)
+    methodChoice <- match.arg(method)
+    cols <- c("lib", levelChoice, "count")
+    tmp <- assay(x)[,..cols]
+    sdata <- sData(x)
+    if (is.null(colGrp)) {
+        colGrp <- "Sample"
+    } else {
+        if (length(grep(colGrp, colnames(sdata))) == 0) colGrp <- "Sample" else colGrp <- colGrp
+        }
+    sNames <- rownames(sdata)
+    groups <- sdata[,unlist(lapply(sdata, is.factor)), drop = F]
+    dat <- dcast(data = tmp, paste(levelChoice, "~lib"), value.var = "count", fun.aggregate = sum)
+    simmat <- dat[, vegan::vegdist(t(.SD), method=methodChoice, diag=TRUE, upper=TRUE), .SDcols=sNames]
+    fit <- cmdscale(simmat, k=2)
+    colnames(fit) <- c("D1" ,"D2")
+    data2plot <- data.frame(merge(fit, sdata, by = 0), row.names=1)
+    #ggplot(data2plot) + geom_point(aes(x=D1, y=D2), size=1) + stat_ellipse(aes(x=D1, y=D2, color=Organ),type = "norm") #+theme(legend.position='none') 
+    fact <- eval(parse(text=paste0("sdata$", colGrp)))
+    ade4::s.class(fit, fac=fact, col=1:nlevels(fact), sub="Multidimensional scaling")
+}
+#, sub=paste("Level:", levelChoice, "; Distance:", methodChoice)
 # plotFrequencySpectrum <- function(x, groupBy = FALSE, colorBy = NULL){
 #   if (missing(x)) stop("x is missing.")
 #   if (!is.RepSeqExperiment(x)) stop("an object of class RepSeqExperiment is expected.")

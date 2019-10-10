@@ -28,7 +28,7 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                   value = "Renyitab"),
 
                                 tabPanel(
-                                  "Dissimilarity Heatmap",
+                                  "Dissimilarity Analysis",
                                   fluidRow(
                                     column(width = 3,
                                   selectizeInput(
@@ -46,12 +46,10 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                     )
                                   ),
                                   column(width = 3,
-                                    selectizeInput("dissimilarityBinary", "Binary",
-                                        choices = list("FALSE", "TRUE"),
-                                        selected="FALSE") #options = list(onInitialize = I('function() { this.setValue(""); }')
+                                     uiOutput("GrpColMDS")
                                   )
                                   ),
-                                  plotOutput("plotDissimilarityHM", height = "auto", width="auto"),
+                                  splitLayout(cellWidths = c("50%", "50%"), plotOutput("plotDissimilarityHM"), plotOutput("plotMDS")),
                                   busyIndicator(wait = 500),
                                   withMathJax(),
                                   htmlOutput("distFuncsMD"),
@@ -126,7 +124,7 @@ compareSampleTab <- tabItem(tabName = "multipleSampleTab",
                                            column(width = 3,
                                                   selectizeInput(
                                                     "muType",
-                                                    "Select what type",
+                                                    "Select data type",
                                                     choices = c("count", "usage"),
                                                     options = list(onInitialize = I('function() { this.setValue(""); }'))
                                                   ))

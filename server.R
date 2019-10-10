@@ -253,8 +253,8 @@ shinyServer(function(input, output, session) {
   })
   # plot Renyi profile
   output$plotRenyi <- renderPlot({
-    validate(need(!(is.null(input$renyiLevel) || input$renyiLevel ==""), "select level"))
-    validate(need(!(is.null(input$renyiGroup) || input$renyiGroup == ""), "select group"))    
+    validate(need(!(is.null(input$renyiLevel) || input$renyiLevel ==""), " "))
+    validate(need(!(is.null(input$renyiGroup) || input$renyiGroup == ""), " "))    
     group <- switch((input$renyiGroup == "Sample") + 1, input$renyiGroup, NULL)
     #RepSeq::plotRenyiProfiles(RepSeqDT(), c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, Inf), input$renyiLevel, group)
     plotRenyiProfiles(x=RepSeqDT(), alpha=c(0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, Inf), level=input$renyiLevel, colorBy=group)
@@ -263,20 +263,33 @@ shinyServer(function(input, output, session) {
   # plot dissimilarity
   output$plotDissimilarityHM <- renderPlot({
     validate(need(!(is.null(input$dissimilarityLevel) || input$dissimilarityLevel == ""), "select level"))
-    validate(need(!(is.null(input$dissimilarityIndex) || input$dissimilarityIndex == ""), "select level"))
-    plotDissimilarityMatrix(x=RepSeqDT(), level=input$dissimilarityLevel, method=input$dissimilarityIndex, binary=input$dissimilarityBinary)
-    
-    }, height = function() {
-        nsamples <- nrow(sData(RepSeqDT()))
-        fact <- ifelse(nsamples < 50, 0.6, 1) 
-        return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*fact)
+    validate(need(!(is.null(input$dissimilarityIndex) || input$dissimilarityIndex == ""), "select dissimilarity index"))
+    plotDissimilarityMatrix(x=RepSeqDT(), level=input$dissimilarityLevel, method=input$dissimilarityIndex, binary="FALSE")    
+    })#, height = function() {
+      #  nsamples <- nrow(sData(RepSeqDT()))
+      #  fact <- ifelse(nsamples < 50, 0.6, 1) 
+      #  return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*fact)
         #return(nsamples * 30 + 40)
-        }, #{return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.65)}, 
-       width = function() {
-        nsamples <- nrow(sData(RepSeqDT()))
-        fact <- ifelse(nsamples < 50, 0.6, 1) 
-        return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*fact)} #{return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.65)})
-    )
+      #  }, #{return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.65)}, 
+      # width = function() {
+      #  nsamples <- nrow(sData(RepSeqDT()))
+      #  fact <- ifelse(nsamples < 50, 0.6, 1) 
+      #  return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*fact)} #{return(as.numeric(session$clientData$output_plotDissimilarityHM_width)*0.65)})
+    #)
+  # create Group selector
+  output$GrpColMDS <- renderUI({
+    validate(need(!(is.null(input$dissimilarityLevel) || input$dissimilarityLevel == ""), " "))
+    validate(need(!(is.null(input$dissimilarityIndex) || input$dissimilarityIndex == ""), " "))
+    selectGroup("grpCol4MDS", RepSeqDT())
+  })
+  # plot MDS  
+  output$plotMDS <- renderPlot({
+    validate(need(!(is.null(input$dissimilarityLevel) || input$dissimilarityLevel == ""), " "))
+    validate(need(!(is.null(input$dissimilarityIndex) || input$dissimilarityIndex == ""), " "))
+    validate(need(!(is.null(input$grpCol4MDS) || input$grpCol4MDS == ""), "select group"))
+    group <- switch((input$grpCol4MDS == "Sample") + 1, input$grpCol4MDS, NULL)
+    plotMDS(RepSeqDT(), level=input$dissimilarityLevel, method=input$dissimilarityIndex, colGrp=group)
+  })
   # include md
   output$distFuncsMD <- renderUI({
       shiny::withMathJax(includeMarkdown("distanceFuncs.md"))

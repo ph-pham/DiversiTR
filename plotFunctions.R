@@ -380,8 +380,8 @@ plotDissimilarityMatrix <- function(x, level=c("VpJ", "V", "J", "VJ", "CDR3aa"),
     levelChoice <- match.arg(level)
     methodChoice <- match.arg(method)
     cols <- c("lib", levelChoice, "count")
-    tmp <- assay(x)[,..cols]
-    sdata <- sData(x)
+    tmp <- RepSeq::assay(x)[,..cols]
+    sdata <- RepSeq::sData(x)
     sNames <- rownames(sdata)
     groups <- sdata[,unlist(lapply(sdata, is.factor)), drop = F]
     data <- dcast(data = tmp, paste(levelChoice, "~lib"), value.var = "count", fun.aggregate = sum)

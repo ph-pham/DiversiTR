@@ -71,6 +71,7 @@ sideMenu <- sidebarMenu(
   #menuItemOutput : diversity in DT
   menuItemOutput("singleSampleTab"),
   menuItemOutput("multipleSampleTab"),
+  menuItemOutput("statisticTab"),
   shinyjs::useShinyjs(),
   menuItemOutput("downloadRDS")
 )

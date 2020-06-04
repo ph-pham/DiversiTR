@@ -4,10 +4,32 @@ library(RepSeq)
 library(ggplot2)
 library(shinysky)
 library(DT)
-source("plotFunctions.R")
+#source("plotFunctions.R")
 
 options(shiny.maxRequestSize = 100 * 1024 ^ 2) # limite la taille des fichiers input, a modifier
 #source("singleSampleAnalysisTab.R")
+
+#' get data from selected area of a plot 
+#' 
+#' function allows to get data from selected area of a plot 
+#' @param x an object of class RepSeqExperiment
+#' @param level choose between V, J, VJ, VpJ, CDR3aa
+#' @param libs a vector of sample names of length 2.
+#' @param plot name of the previous plot
+#' @return a data.table
+#' @export
+# @example
+brush2v2count <- function(x, level = c("V", "J", "VJ", "VpJ", "CDR3aa"), libs = NULL, plot = NULL){
+    if (missing(x)) stop("x is missing.")
+    if (!is.RepSeqExperiment(x)) stop("an object of class RepSeqExperiment is expected.")
+    levelChoice <- match.arg(level)
+    cts <- data.table::copy(assay(x))
+    counts <- cts[lib ==libs[1] | lib == libs[2]]
+    selected <- data.table::dcast(counts, paste(levelChoice, "~lib"), value.var="count", fun.aggregate = sum)
+    bp <- shiny::brushedPoints(selected, plot)
+    out <- counts[eval(parse(text = levelChoice)) %in% bp[[levelChoice]]]
+    return(out)
+}
 
 alphaInput <- function(level) {
   textInput(paste0("alpha", level),

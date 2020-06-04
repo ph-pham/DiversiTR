@@ -83,7 +83,7 @@ compareSampleTab <-
                                 choices = c("Sum" = "sum", "Average" = "mean"),
                                 selected = "Sum"
                             )
-                        )    
+                        )
                     ),
                     plotOutput("plotDistribVpJ"),
                     busyIndicator(wait = 500)

@@ -177,7 +177,7 @@ shinyServer(function(input, output, session) {
     output$spectraPlotbis <- renderPlot({
         sampleError(input$singleSample)
         validate(need(!(is.null(input$singleScale) || input$singleScale == ""), "Choose a scale"))
-        plotSpectratypebis(RepSeqDT(), input$singleSample, input$singleScale, input$spectraCDR3)
+        plotSpectratypeV(RepSeqDT(), input$singleSample, input$singleScale, input$spectraCDR3)
         },  width="auto", 
             height <- function() {
                 if (is.null(input$singleSample) || input$singleSample == "") return(600)

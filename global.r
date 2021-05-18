@@ -1,14 +1,21 @@
+#------------------------------------------------------------------------------#
+#  check and load libraries
+#------------------------------------------------------------------------------#
+source("installPackages.R", local = TRUE)
 library(shiny)
 library(shinydashboard)
 library(RepSeq)
 library(ggplot2)
 library(shinysky)
 library(DT)
-#source("plotFunctions.R")
+#------------------------------------------------------------------------------#
+# options
+#------------------------------------------------------------------------------#
+options(shiny.maxRequestSize = 200 * 1024 ^ 2) # limite la taille des fichiers input, a modifier
 
-options(shiny.maxRequestSize = 100 * 1024 ^ 2) # limite la taille des fichiers input, a modifier
-#source("singleSampleAnalysisTab.R")
-
+#------------------------------------------------------------------------------#
+# additional functions
+#------------------------------------------------------------------------------#
 #' get data from selected area of a plot 
 #' 
 #' function allows to get data from selected area of a plot 
@@ -31,13 +38,20 @@ brush2v2count <- function(x, level = c("V", "J", "VJ", "VpJ", "CDR3aa"), libs = 
     return(out)
 }
 
+# Input alpha for Renyi profiles
+#
+# @param level 
+# @return
 alphaInput <- function(level) {
   textInput(paste0("alpha", level),
             label = "values of alpha separated by commas",
             "0, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, Inf")
 }
 
-sampleError <- function(ID){
+
+# return
+#
+sampleError <- function(ID) {
   validate(need(!(is.null(ID) || ID == ""), "select sample"))
   
 }
@@ -51,10 +65,24 @@ selectSample <- function(ID, sampleNames) {
                  choices = sampleNames,
                  options = list(onInitialize = I('function() { this.setValue(""); }')))
 }
-# select biological groups
-selectGroup <- function(ID, x){
-  sdata <- sData(x)[,unlist(lapply(sData(x), is.factor))]
-  choices <- colnames(sdata)
+
+# function generate selectizeInput for selecting biological groups
+selectGroup <- function(ID, x) {  
+    sdata <- sData(x)[,unlist(lapply(sData(x), function(y) { is.character(y) | is.factor(y)} )), drop = FALSE]
+    choices <- colnames(sdata)
+    selectizeInput(
+        ID,
+        "Select group",
+        choices = choices,
+        options = list(onInitialize = I('function() { this.setValue(""); }'))
+    )
+}
+
+# same as above but exclude factor having the number of levels equal to its length 
+selectGroupDE <- function(ID, x){
+  sdata <- sData(x)[,unlist(lapply(sData(x), function(y) { is.character(y) | is.factor(y)} )), drop = FALSE]
+  idx <- sapply(sdata, function(i) nlevels(i)/length(i))
+  choices <- colnames(sdata)[which(idx < 1)]
   selectizeInput(
     ID,
     "Select group",
@@ -63,22 +91,44 @@ selectGroup <- function(ID, x){
   )
 }
 
-#Pour plotRenyiProfile, prend str en transforme en liste de valeurs de alpha
+
+# For plotRenyiProfile, prend str en transforme en liste de valeurs de alpha
 getAlpha <- function(str) {
   as.numeric(unlist(strsplit(str, ",")))
 }
 
-convertMenuItem <- function(mi,tabName) {
+# convert menu item
+# https://stackoverflow.com/questions/31794702/r-shiny-dashboard-tabitems-not-apparing
+convertMenuItem <- function(mi, tabName) {
   mi$children[[1]]$attribs['data-toggle']="tab"
   mi$children[[1]]$attribs['data-value'] = tabName
   mi
 }
 
-
+# Collapse x and y
 renameFiles <- function (x, y) {
   paste0(x, "/", y)
 }
 
+# render R print output
+printHtml <- function(obj){
+  HTML(paste("<p style='font-size:10px;'>", paste0(capture.output(print(obj)), collapse="<br/>"), "</p>"))
+}
+
+# Plot histograms
+histSums <- function(dat=NULL, xlab="", ylab=""){
+  if(is.null(dat)){
+    p <- qplot(0)
+  } else {
+    p <- ggplot(data.frame(sums=dat), aes(x=sums)) +
+         geom_histogram() + 
+         xlab(xlab) + ylab(ylab) +
+         scale_x_log10(labels = scales::comma)
+  }
+  return(p)
+}
+
+# Generate dashboard header
 mydashboardHeader <- function(..., title = NULL, titleWidth = NULL, disable = FALSE,title.navbar=NULL, .list = NULL) {
   items <- c(list(...), .list)
   titleWidth <- validateCssUnit(titleWidth)
